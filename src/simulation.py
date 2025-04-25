@@ -1,30 +1,31 @@
 import numpy as np
+import calendar
+import data 
+import heapq
 
+jahr = 2025
 
-def run_monte_carlo(ort = "Gesamt", preis_pro_stunde = 3, experiments = 10000):
-    jahresergebnis  = Jahresergebnis()
-    wochentagen = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
-
-    for monat in range(12):
-        monatsergebnis = Monatsergebnis(monat)
+def run_monte_carlo(ort = data.Ortvariablen.GANZ_DRESDEN.name, preis_pro_stunde = 3, experiments = 10000):
+    jahresergebnisse = []
+    for _ in range(experiments):
+        jahresergebnis = Jahresergebnis()
         hit = 0
-        for _ in range(experiments):
-            tagesergebnis = Tagesergebnis(monat, ort, preis_pro_stunde)
+        for monat in range(12):
+            monatsergebnis = Monatsergebnis(jahr, monat)
+            anzahl_tage = monatsergebnis.anzahl_tage
+            for tag in range(anzahl_tage):
+                tagesergebnis = Tagesergebnis(monat, ort, preis_pro_stunde)
+                if tagesergebnis.gewinn > 0:
+                    hit += 1
+                monatsergebnis.add_tagesergebnis(tagesergebnis)
+            monatsergebnis.hit_rate = hit / anzahl_tage
+            jahresergebnis.add_monatsergebnis(monatsergebnis)  
+        jahresergebnisse.append(jahresergebnis)
+    return jahresergebnisse
 
-            if tagesergebnis.gewinn > 0:
-                hit += 1
-            
-            monatsergebnis.max_tagesergebnis = tagesergebnis
-
-        monatsergebnis.hit_rate = hit / experiments
-        jahresergebnis.add_monatsergebnis(monatsergebnis)
-    return jahresergebnis
         
             
 class Jahresergebnis:
-    """
-    Diese Klasse speichert die Ergebnisse der Monte Carlo Simulation für ein Jahr.
-    """
     def __init__(self):
         self._monatsergebnisse: list[Monatsergebnis] = []
         self._jahresgewinn = 0
@@ -40,47 +41,27 @@ class Jahresergebnis:
     @property
     def monatsergebnisse(self):
         """
-        Gibt die Ergebnisse für jeden Monat zurück.
         :rtype: list[Monatsergebnis]
         """
         return self._monatsergebnisse
     
     def monatsergebnis(self, monat):
         """
-        Gibt die Ergebnisse für einen bestimmten Monat zurück.
-        :param monat: Der Monat (0-11)
-        :return: Das Ergebnis für den angegebenen Monat
+        :rtype: Monatsergebnis
         """
         if monat < 0 or monat > 11:
             raise ValueError("Monat muss zwischen 0 und 11 liegen.")
         return self._monatsergebnisse[monat]
     
     def monatsgewinn(self, monat):
-        """
-        Gibt den Gewinn für einen bestimmten Monat zurück.
-        :param monat: Der Monat (0-11)
-        :return: Der Gewinn für den angegebenen Monat
-        """
         if monat < 0 or monat > 11:
             raise ValueError("Monat muss zwischen 0 und 11 liegen.")
         return self._monatsergebnisse[monat].max_gewinn
     
     def monat_hit_rate(self, monat):
-        """
-        Gibt die Hit-Rate für einen bestimmten Monat zurück.
-        :param monat: Der Monat (0-11)
-        :return: Die Hit-Rate für den angegebenen Monat
-        """
         if monat < 0 or monat > 11:
             raise ValueError("Monat muss zwischen 0 und 11 liegen.")
         return self._monatsergebnisse[monat].hit_rate
-    
-    def to_dict(self):
-        data = []
-        for monatsergebnis in self._monatsergebnisse:
-            data.append(monatsergebnis.to_dict())
-        return data
-
     
     def __str__(self):
         ergebnisse = []
@@ -96,60 +77,67 @@ class Jahresergebnis:
     
     
 class Monatsergebnis:
-    def __init__(self, monat):
+    def __init__(self, jahr, monat):
         self.monat = monat
-        self._max_tagesergebnis = None
+        self.anzahl_tage = calendar.monthrange(jahr, monat + 1)[1]
+        self._tagesergebnisse: list[Tagesergebnis] = []
         self.hit_rate = 0
 
-    @property
-    def max_tagesergebnis(self):
-        return self._max_tagesergebnis
-    
-    @max_tagesergebnis.setter
-    def max_tagesergebnis(self, tagesergebnis):
-        if self._max_tagesergebnis is None:
-            self._max_tagesergebnis = tagesergebnis
+    def add_tagesergebnis(self, tagesergebnis):
+        if len(self._tagesergebnisse) < self.anzahl_tage:
+            heapq.heappush(self._tagesergebnisse, tagesergebnis)
         else:
-            if self._max_tagesergebnis.gewinn < tagesergebnis.gewinn:
-                self._max_tagesergebnis = tagesergebnis
+            heapq.heappushpop(self._tagesergebnisse, tagesergebnis)
 
-    @property
-    def max_gewinn(self):
-        return self._max_tagesergebnis.gewinn if self._max_tagesergebnis else 0
+    def max_tagesgewinn(self):
+        return heapq.nlargest(1, self._tagesergebnisse)[0].gewinn if self._tagesergebnisse else 0
+    
+    def sum_tagesgewinn(self):
+        return sum(tagesergebnis.gewinn for tagesergebnis in self._tagesergebnisse)
+
 
     def to_dict(self):
         return {
             "Monat": self.monat + 1,
-            "Gewinn": f"{self.max_gewinn} €",
+            "Gewinn": f"{self.sum_tagesgewinn()} €",
             "Hit": f"{self.hit_rate * 100:.2f} %"
         }
     
     def to_tuple(self):
-        return [self.monat + 1, f"{self.max_gewinn} €", f"{self.hit_rate * 100:.2f} %"]
+        return [self.monat + 1, f"{self.sum_tagesgewinn()} €", f"{self.hit_rate * 100:.2f} %"]
 
     def __str__(self):
-        return f"Monat: {self.monat + 1}, Gewinn: {self.max_gewinn:.2f}, Hit: {self.hit_rate * 100:.2f} %"
+        return f"Monat: {self.monat + 1}, Gewinn: {self.sum_tagesgewinn():.2f}, Hit: {self.hit_rate * 100:.2f} %"
 
 
 class Tagesergebnis:
+    LAMBDA_BASIS = 0.002
+    VARKOSTEN_PRO_STUNDE = 0.5
+
     def __init__(self, monat, ort, preis_pro_stunde):
+        """
+        :param monat: Monat (0-11)
+        :param ort: String
+        :param preis_pro_stunde: Preis pro Stunde
+        """
         self.monat = monat
-        self.ort = ort
-        self.lamda_basis = 0.002
-        self.varkosten_pro_stunde = 0.5
-        self.fixkosten_pro_tag = Datenquelle.fixkosten_pro_tag(ort)
-        self.temperatur = np.random.normal(self.mw_temperatur, 5)
-        self.bevoelkerung = np.random.normal(self.mw_bevoelkerung, 1000)
+        self.ort = data.Ortvariablen.get_filial_by_name(ort)
+        self.monatsvariable = data.Monatsvariablen.get_monatsaenderung_by_monat(monat)
+        self.temperatur = np.random.normal(self.monatsvariable.temperatur, self.monatsvariable.temp_abweichung)
+        self.bevoelkerungszahl = np.random.normal(self.ort.einwohner, self.monatsvariable.einwohner_abweichung)
         self.konkurenzindex = np.random.uniform(0, 1)
         self.kundenzahl = np.random.poisson(self.erwartete_kundenzahl)
         self.mietdauer = np.random.randint(1, 6, size=self.kundenzahl)
         self.umsatz = np.sum(preis_pro_stunde * self.mietdauer)
-        self.varkosten = np.sum(self.varkosten_pro_stunde * self.mietdauer)
-        self.gewinn = round(self.umsatz - self.varkosten - self.fixkosten_pro_tag, 2)
+        self.varkosten = np.sum(self.VARKOSTEN_PRO_STUNDE * self.mietdauer)
+        self.gewinn = round(self.umsatz - self.varkosten - self.ort.fixkosten_pro_tag, 2)
+
+    def ist_erreichter_gewinn(self):
+        return self.gewinn >= self.ort.erwarteter_gewinn_pro_tag
 
     @property
     def erwartete_kundenzahl(self):
-        return self.bevoelkerung * self.saisonfaktor * self.lamda_basis * self.temperaturfaktor * self.konkurrenzfaktor
+        return self.bevoelkerungszahl * self.saisonfaktor * self.LAMBDA_BASIS * self.temperaturfaktor * self.konkurrenzfaktor
 
     @property
     def konkurrenzfaktor(self):
@@ -170,7 +158,7 @@ class Tagesergebnis:
     
     @property
     def saisonfaktor(self):
-        return 1 + (self.uebernachtungen / (self.aufenthaltsdauer * self.bevoelkerung))
+        return 1 + (self.uebernachtungen / (self.aufenthaltsdauer * self.bevoelkerungszahl))
     
     def mietdauerbereich(self):
         if self.temperatur < 10:
@@ -179,72 +167,17 @@ class Tagesergebnis:
             return 1.5, 2.5
 
     @property
-    def mw_temperatur(self):
-        return Datenquelle.mw_temperatur(self.monat)
-
-    @property
-    def mw_bevoelkerung(self):
-        return Datenquelle.mw_bevoelkerung(self.ort)
-
-    @property
     def uebernachtungen(self):
-        return Datenquelle.uebernachtungen(self.monat)
+        return self.monatsvariable.tourist.uebernachtungen
 
     @property
     def aufenthaltsdauer(self):
-        return Datenquelle.aufenthaltsdauer(self.monat)
+        return self.monatsvariable.tourist.aufenthaltsdauer
 
-    @property
-    def stadtbevoelkerung(self):
-        return Datenquelle.stadtbevoelkerungszahl
-    
+
     def __str__(self):
-        return f"Monat: {self.monat + 1}, Ort: {self.ort}, Temperatur: {self.temperatur:.2f}"
+        return f"Monat: {self.monat + 1}, Ort: {self.ort.name}, Temperatur: {self.temperatur:.2f}"
 
     def __repr__(self):
         return str(self)
-
-
-class Datenquelle:
-    mw_temperatur_monate = [2, 4, 8, 12, 16, 20, 24, 22, 18, 14, 8, 4]
-    mw_bevoelkerung_orte = {
-        "Altstadt": 2707,
-        "Neustadt": 7974,
-        "Südvorstadt": 23345
-    }
-    fixkosten_pro_tag_orte = { 
-        "Altstadt": 300,
-        "Neustadt": 400,
-        "Südvorstadt": 600
-    }
-    uebernachtungen_monate = [202020, 212069, 315471, 390638, 422176, 402027, 411270, 447823, 439726, 430568, 304066, 459610]
-    aufenthaltsdauer_monate = [2.05, 2.07, 2.14, 2.23, 2.16, 2.12, 2.03, 2.08, 2.08, 2.25, 1.97, 2.14]
-    stadtbevoelkerungszahl = 572240
     
-    @staticmethod
-    def mw_temperatur(monat):
-        return Datenquelle.mw_temperatur_monate[monat]  
-    
-    @staticmethod
-    def uebernachtungen(monat):
-        return Datenquelle.uebernachtungen_monate[monat]
-    
-    @staticmethod
-    def aufenthaltsdauer(monat):
-        return Datenquelle.aufenthaltsdauer_monate[monat]
-
-    @staticmethod
-    def mw_bevoelkerung(ort):
-        if ort == "Gesamt":
-            return np.sum(list(Datenquelle.mw_bevoelkerung_orte.values()))
-        if ort not in Datenquelle.mw_bevoelkerung_orte:
-            raise ValueError(f"Ort {ort} nicht gefunden.")
-        return Datenquelle.mw_bevoelkerung_orte[ort]
-    
-    @staticmethod
-    def fixkosten_pro_tag(ort):
-        if ort == "Gesamt":
-            return np.sum(list(Datenquelle.fixkosten_pro_tag_orte.values()))
-        if ort not in Datenquelle.fixkosten_pro_tag_orte:
-            raise ValueError(f"Ort {ort} nicht gefunden.")
-        return Datenquelle.fixkosten_pro_tag_orte[ort]

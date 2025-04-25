@@ -1,5 +1,4 @@
 import simulation as sim
-import utils as ut
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,22 +7,24 @@ import pandas as pd
 
 def display_tabular_data(sim_ergebnisse):
     # Tabellarische Darstellung der Ergebnisse
-    st.subheader("Monatsgewinn und Treffer")
+    st.subheader("Maximaler Monatsgewinn und Treffer")
     for i, sim_ergebnis in enumerate(sim_ergebnisse):
         with st.expander(f"Durchlauf {i + 1}"):
-            df = pd.DataFrame(columns=["Monat", "Max. Gewinn", "Treffer"])
+            df = pd.DataFrame(columns=["Monat", "Maximaler Gewinn", "Treffer"])
             for monat in range(12):
                 df.loc[monat] = sim_ergebnis.monatsergebnis(monat).to_tuple()
             st.dataframe(df, use_container_width=True, hide_index=True)
             st.write(f"Jahresgewinn: {sim_ergebnis.jahresgewinn} €")
 
 
-def auswertung(sim_ergebnisse):
+def analyze(sim_ergebnisse):
+    # ergebnis = {}
+    # ergebnis = statistic.rechnen(sim_ergebnisse)
     # for ergebnis in sim_ergebnisse:
     pass
 
 
-def plot_results(sim_ergebnisse):
+def plot(sim_ergebnisse):
     st.subheader("Gewinnverlauf über das Jahr (monatlich)")
     fig, ax = plt.subplots()
 
@@ -44,13 +45,14 @@ def run_simulation(durchlaeufen, preis_pro_stunde, ort):
         print(f"Durchlauf {i + 1}:\n{sim_ergebnis}")
     return sim_ergebnisse
 
+##----------------------- Hauptprogramm: Streamlit App --------------------------------------
 # Titel
 st.set_page_config(page_title="Bike-Verleihstationen", page_icon="🚲")
 st.title("Monte Carlo Simulation")
 st.header("Bike-Verleihstationen in Dresden 🚲")
 # Eingabefelder
 preis_pro_stunde = st.number_input("Preis pro Stunde (€):", min_value=1.0, max_value=10.0, value=5.0, step=0.5)
-ort = st.selectbox("Ort:", ["Gesamt", "Altstadt", "Neustadt", "Südvorstadt"])
+ort = st.selectbox("Ort:", ["Ganz Dresden", "Altstadt", "Neustadt", "Südvorstadt"])
 durchlaeufe = st.number_input("Anzahl der Durchläufe:", min_value=1, max_value=30, value=10, step=1)
 # Button für die Simulation
 if st.button("Simulation starten"):
