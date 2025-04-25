@@ -5,38 +5,50 @@ import heapq
 
 jahr = 2025
 
-def run_monte_carlo(ort = data.Ortvariablen.GANZ_DRESDEN.name, preis_pro_stunde = 3, experiments = 10000):
+def run_monte_carlo(ort = data.Ortvariablen.GANZ_DRESDEN.name, preis_pro_stunde = 5, experiments = 1000):
+    """
+    :rtype: list[Jahresergebnis]
+    """
     jahresergebnisse = []
+
     for _ in range(experiments):
         jahresergebnis = Jahresergebnis()
-        hit = 0
         for monat in range(12):
             monatsergebnis = Monatsergebnis(jahr, monat)
             anzahl_tage = monatsergebnis.anzahl_tage
             for tag in range(anzahl_tage):
                 tagesergebnis = Tagesergebnis(monat, ort, preis_pro_stunde)
-                if tagesergebnis.gewinn > 0:
-                    hit += 1
                 monatsergebnis.add_tagesergebnis(tagesergebnis)
-            monatsergebnis.hit_rate = hit / anzahl_tage
             jahresergebnis.add_monatsergebnis(monatsergebnis)  
         jahresergebnisse.append(jahresergebnis)
     return jahresergebnisse
 
-        
             
 class Jahresergebnis:
     def __init__(self):
         self._monatsergebnisse: list[Monatsergebnis] = []
-        self._jahresgewinn = 0
+
+    @property
+    def anzahl_tage(self):
+        return sum(monatsergebnis.anzahl_tage for monatsergebnis in self._monatsergebnisse)
+
+    @property
+    def treffer(self):
+        return sum(monatsergebnis.treffer for monatsergebnis in self._monatsergebnisse)
+
+    @property
+    def treffer_quote(self):
+        return round(100 * self.treffer / self.anzahl_tage if self._monatsergebnisse else 0, 2)
     
+    def max_monatsergebnis(self):
+        return max(self._monatsergebnisse, key=lambda x: x.max_tagesergebnis().gewinn) if self._monatsergebnisse else None
+        
+    @property
+    def gewinn(self):
+        return sum(monatsergebnis.gewinn for monatsergebnis in self._monatsergebnisse)
+
     def add_monatsergebnis(self, monatsergebnis):
         self._monatsergebnisse.append(monatsergebnis)
-        self._jahresgewinn += monatsergebnis.max_gewinn
-    
-    @property
-    def jahresgewinn(self):
-        return self._jahresgewinn
 
     @property
     def monatsergebnisse(self):
@@ -53,61 +65,53 @@ class Jahresergebnis:
             raise ValueError("Monat muss zwischen 0 und 11 liegen.")
         return self._monatsergebnisse[monat]
     
-    def monatsgewinn(self, monat):
-        if monat < 0 or monat > 11:
-            raise ValueError("Monat muss zwischen 0 und 11 liegen.")
-        return self._monatsergebnisse[monat].max_gewinn
-    
-    def monat_hit_rate(self, monat):
-        if monat < 0 or monat > 11:
-            raise ValueError("Monat muss zwischen 0 und 11 liegen.")
-        return self._monatsergebnisse[monat].hit_rate
+    def to_list(self):
+        return [ f"{self.gewinn} €", f"{self.treffer_quote} %" ]
     
     def __str__(self):
         ergebnisse = []
         for monatsergebnis in self._monatsergebnisse:
             ergebnisse.append(str(monatsergebnis))
         result = "\n".join(ergebnisse)
-        result += f"\nJahresgewinn: {self._jahresgewinn:.2f}"
+        result += f"\nJahresgewinn: {self.gewinn:.2f}"
         return result
     
     def __repr__(self):
         return f"{self.__class__.__name__}(Monate={self._monatsergebnisse})"
 
     
-    
 class Monatsergebnis:
     def __init__(self, jahr, monat):
         self.monat = monat
         self.anzahl_tage = calendar.monthrange(jahr, monat + 1)[1]
         self._tagesergebnisse: list[Tagesergebnis] = []
-        self.hit_rate = 0
+
+    @property
+    def treffer(self):
+        return sum(t.ist_treffer() for t in self._tagesergebnisse)
+
+    @property
+    def treffer_quote(self):
+        return round(100 * self.treffer / self.anzahl_tage if self.anzahl_tage > 0 else 0, 2)
 
     def add_tagesergebnis(self, tagesergebnis):
-        if len(self._tagesergebnisse) < self.anzahl_tage:
-            heapq.heappush(self._tagesergebnisse, tagesergebnis)
-        else:
-            heapq.heappushpop(self._tagesergebnisse, tagesergebnis)
+        self._tagesergebnisse.append(tagesergebnis)
 
-    def max_tagesgewinn(self):
-        return heapq.nlargest(1, self._tagesergebnisse)[0].gewinn if self._tagesergebnisse else 0
+    def max_tagesergebnis(self):
+        return max(self._tagesergebnisse, key=lambda x: x.gewinn) if self._tagesergebnisse else None
     
-    def sum_tagesgewinn(self):
+    def min_tagesergebnis(self):
+        return min(self._tagesergebnisse, key=lambda x: x.gewinn) if self._tagesergebnisse else None
+    
+    @property
+    def gewinn(self):
         return sum(tagesergebnis.gewinn for tagesergebnis in self._tagesergebnisse)
-
-
-    def to_dict(self):
-        return {
-            "Monat": self.monat + 1,
-            "Gewinn": f"{self.sum_tagesgewinn()} €",
-            "Hit": f"{self.hit_rate * 100:.2f} %"
-        }
     
-    def to_tuple(self):
-        return [self.monat + 1, f"{self.sum_tagesgewinn()} €", f"{self.hit_rate * 100:.2f} %"]
+    def to_list(self):
+        return [ self.monat + 1, f"{self.gewinn} €", f"{self.treffer_quote} %" ]
 
     def __str__(self):
-        return f"Monat: {self.monat + 1}, Gewinn: {self.sum_tagesgewinn():.2f}, Hit: {self.hit_rate * 100:.2f} %"
+        return f"Monat: {self.monat + 1}, Gewinn: {self.gewinn:.2f}, Treffer: {self.treffer_quote} %"
 
 
 class Tagesergebnis:
@@ -131,9 +135,9 @@ class Tagesergebnis:
         self.umsatz = np.sum(preis_pro_stunde * self.mietdauer)
         self.varkosten = np.sum(self.VARKOSTEN_PRO_STUNDE * self.mietdauer)
         self.gewinn = round(self.umsatz - self.varkosten - self.ort.fixkosten_pro_tag, 2)
-
-    def ist_erreichter_gewinn(self):
-        return self.gewinn >= self.ort.erwarteter_gewinn_pro_tag
+    
+    def ist_treffer(self):
+        return self.gewinn > 0 # oder andere erwarteter Gewinn
 
     @property
     def erwartete_kundenzahl(self):

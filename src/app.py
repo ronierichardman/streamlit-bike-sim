@@ -10,39 +10,42 @@ def display_tabular_data(sim_ergebnisse):
     st.subheader("Maximaler Monatsgewinn und Treffer")
     for i, sim_ergebnis in enumerate(sim_ergebnisse):
         with st.expander(f"Durchlauf {i + 1}"):
-            df = pd.DataFrame(columns=["Monat", "Maximaler Gewinn", "Treffer"])
-            for monat in range(12):
-                df.loc[monat] = sim_ergebnis.monatsergebnis(monat).to_tuple()
+            df = pd.DataFrame(columns=["Experiment", "Gewinn", "Treffer"])
+            for exp, jahresergebnis in enumerate(sim_ergebnis):
+                df.loc[exp] = [exp] + jahresergebnis.to_list()
             st.dataframe(df, use_container_width=True, hide_index=True)
-            st.write(f"Jahresgewinn: {sim_ergebnis.jahresgewinn} €")
 
 
-def analyze(sim_ergebnisse):
-    # ergebnis = {}
-    # ergebnis = statistic.rechnen(sim_ergebnisse)
-    # for ergebnis in sim_ergebnisse:
-    pass
+# def analyze(sim_ergebnisse):
+#     # ergebnis = {}
+#     # ergebnis = statistic.rechnen(sim_ergebnisse)
+#     # for ergebnis in sim_ergebnisse:
+#     pass
 
 
-def plot(sim_ergebnisse):
-    st.subheader("Gewinnverlauf über das Jahr (monatlich)")
-    fig, ax = plt.subplots()
+# def plot(sim_ergebnisse):
+#     st.subheader("Gewinnverlauf über das Jahr (monatlich)")
+#     fig, ax = plt.subplots()
 
-    for ergebnis in sim_ergebnisse:
-        plt.plot(ergebnis.monatsergebnisse, label=f"Monat {ergebnis.monat}")
+#     for ergebnis in sim_ergebnisse:
+#         plt.plot(ergebnis.monatsergebnisse, label=f"Monat {ergebnis.monat}")
 
-    plt.xlabel("Monate")
-    plt.ylabel("Gewinn")
-    plt.title("Simulationsergebnisse")
-    plt.legend()
-    plt.show()
+#     plt.xlabel("Monate")
+#     plt.ylabel("Gewinn")
+#     plt.title("Simulationsergebnisse")
+#     plt.legend()
+#     plt.show()
 
-def run_simulation(durchlaeufen, preis_pro_stunde, ort):
+def run_simulation(durchlaeufen, preis_pro_stunde=0, ort=""):
     sim_ergebnisse = []
     for i in range(durchlaeufen):
-        sim_ergebnis = sim.run_monte_carlo(preis_pro_stunde=preis_pro_stunde, ort=ort)
+        sim_ergebnis = sim.run_monte_carlo()
         sim_ergebnisse.append(sim_ergebnis)
-        print(f"Durchlauf {i + 1}:\n{sim_ergebnis}")
+        print(f"Durchlauf {i + 1}:")
+        for i, jahr in enumerate(sim_ergebnis):
+            print(i + 1)
+            print(jahr)
+
     return sim_ergebnisse
 
 ##----------------------- Hauptprogramm: Streamlit App --------------------------------------
@@ -68,7 +71,7 @@ if st.button("Simulation starten"):
   
 
 # def main():
-#     sim_ergebnisse = run_simulation(3, 5.0, "Altstadt")
+#     sim_ergebnisse = run_simulation(3)
 
 # if __name__ == "__main__":
 #     main()

@@ -9,8 +9,8 @@ class Tourist:
 class Monatsvariable:
     monat: int
     temperatur: float
-    temp_abweichung: float = 0.0
-    einwohner_abweichung: int = 0
+    temp_abweichung: float
+    einwohner_abweichung: int
     tourist: Tourist
 
 @dataclass(frozen=True)
@@ -50,16 +50,17 @@ class Monatsvariablen:
 
     
 class Ortvariablen:
-    ALTSTADT = Ortvariable(name="Altstadt", einwohner=2707, fixkosten_pro_tag=1000, erwarteter_gewinn_pro_tag=1000)
-    NEUSTADT = Ortvariable(name="Neustadt", einwohner=7974, fixkosten_pro_tag=1000, erwarteter_gewinn_pro_tag=1000)
-    SUEDVORSTADT = Ortvariable(name="Südvorstadt", einwohner=23345, fixkosten_pro_tag=1000, erwarteter_gewinn_pro_tag=1000)
+    ALTSTADT = Ortvariable(name="Altstadt", einwohner=2707, fixkosten_pro_tag=500, erwarteter_gewinn_pro_tag=1000)
+    NEUSTADT = Ortvariable(name="Neustadt", einwohner=7974, fixkosten_pro_tag=500, erwarteter_gewinn_pro_tag=1000)
+    SUEDVORSTADT = Ortvariable(name="Südvorstadt", einwohner=23345, fixkosten_pro_tag=500, erwarteter_gewinn_pro_tag=1000)
     
     ALL = [ ALTSTADT, NEUSTADT, SUEDVORSTADT ]
 
     GANZ_DRESDEN = Ortvariable(
         name="Ganz Dresden", 
         einwohner=sum(f.einwohner for f in ALL), 
-        fixkosten_pro_tag=sum(f.fixkosten_pro_tag for f in ALL)
+        fixkosten_pro_tag=sum(f.fixkosten_pro_tag for f in ALL),
+        erwarteter_gewinn_pro_tag=sum(f.erwarteter_gewinn_pro_tag for f in ALL)
     )
 
     @staticmethod
