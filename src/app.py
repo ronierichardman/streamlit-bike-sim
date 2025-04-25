@@ -3,6 +3,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from streamlit_echarts import st_echarts
 
 
 def display_tabular_data(sim_ergebnisse):
@@ -68,7 +69,19 @@ if st.button("Simulation starten"):
         except Exception as e:
             print(f"Fehler bei der Simulation: {e}")
             st.error("Fehler bei der Simulation: " + str(e))
-  
+
+option = {
+    "xAxis": {
+        "type": "category",
+        "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    },
+    "yAxis": {"type": "value"},
+    "series": [{"data": [820, 932, 901, 934, 1290, 1330, 1320], "type": "line"}],
+}
+st_echarts(
+    options=option, height="400px",
+)
+
 
 # def main():
 #     sim_ergebnisse = run_simulation(3)
