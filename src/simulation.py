@@ -1,7 +1,6 @@
 import numpy as np
 import calendar
 import data 
-import heapq
 
 jahr = 2025
 

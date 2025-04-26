@@ -1,11 +1,12 @@
 import simulation as sim
+import statistic as stat
+from statistic import DurchlaufErgebnis
 import streamlit as st
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 from streamlit_echarts import st_echarts
 
-
+ 
 def display_tabular_data(sim_ergebnisse):
     # Tabellarische Darstellung der Ergebnisse
     st.subheader("Maximaler Monatsgewinn und Treffer")
@@ -24,18 +25,10 @@ def display_tabular_data(sim_ergebnisse):
 #     pass
 
 
-# def plot(sim_ergebnisse):
-#     st.subheader("Gewinnverlauf über das Jahr (monatlich)")
-#     fig, ax = plt.subplots()
+def plot_simulation(durchlauf_ergebnisse):
+    #Diagramm für die Simulationsergebnisse
+    stat.plot_diagram_durchlaeufe(durchlauf_ergebnisse)
 
-#     for ergebnis in sim_ergebnisse:
-#         plt.plot(ergebnis.monatsergebnisse, label=f"Monat {ergebnis.monat}")
-
-#     plt.xlabel("Monate")
-#     plt.ylabel("Gewinn")
-#     plt.title("Simulationsergebnisse")
-#     plt.legend()
-#     plt.show()
 
 def run_simulation(durchlaeufen, preis_pro_stunde=0, ort=""):
     sim_ergebnisse = []
@@ -48,6 +41,19 @@ def run_simulation(durchlaeufen, preis_pro_stunde=0, ort=""):
             print(jahr)
 
     return sim_ergebnisse
+
+def run_simulation_2(num_durchlaeufen, preis_pro_stunde=0, ort=""):
+    durchlauf_ergebnisse = []
+    for i in range(num_durchlaeufen):
+        sim_ergebnis = sim.run_monte_carlo()
+        durchlauf_ergebnis = DurchlaufErgebnis(sim_ergebnis)
+        durchlauf_ergebnisse.append(durchlauf_ergebnis)
+        print(f"Durchlauf {i + 1}:")
+        for i, jahr in enumerate(sim_ergebnis):
+            print(i + 1)
+            print(jahr)
+
+    return durchlauf_ergebnisse
 
 ##----------------------- Hauptprogramm: Streamlit App --------------------------------------
 # Titel
@@ -62,29 +68,20 @@ durchlaeufe = st.number_input("Anzahl der Durchläufe:", min_value=1, max_value=
 if st.button("Simulation starten"):
     with st.spinner("Simulation läuft..."):
         try:
-            sim_ergebnisse = run_simulation(durchlaeufe, preis_pro_stunde, ort)
-            display_tabular_data(sim_ergebnisse)
+            sim_ergebnisse = run_simulation_2(durchlaeufe, preis_pro_stunde, ort)
+            #display_tabular_data(sim_ergebnisse)
+
+            plot_simulation(sim_ergebnisse)
             st.success("Simulation abgeschlossen!")
             st.balloons()
         except Exception as e:
             print(f"Fehler bei der Simulation: {e}")
             st.error("Fehler bei der Simulation: " + str(e))
 
-option = {
-    "xAxis": {
-        "type": "category",
-        "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    },
-    "yAxis": {"type": "value"},
-    "series": [{"data": [820, 932, 901, 934, 1290, 1330, 1320], "type": "line"}],
-}
-st_echarts(
-    options=option, height="400px",
-)
-
 
 # def main():
-#     sim_ergebnisse = run_simulation(3)
+#     sim_ergebnisse = run_simulation_2(3)
+#     plot_simulation(sim_ergebnisse)
 
 # if __name__ == "__main__":
 #     main()
