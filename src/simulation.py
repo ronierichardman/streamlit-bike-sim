@@ -1,7 +1,8 @@
+from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 import calendar
 import data 
-import heapq
+from functools import cached_property
 
 jahr = 2025
 
@@ -9,43 +10,50 @@ def run_monte_carlo(ort = data.Ortvariablen.GANZ_DRESDEN.name, preis_pro_stunde 
     """
     :rtype: list[Jahresergebnis]
     """
-    jahresergebnisse = []
-
-    for _ in range(experiments):
-        jahresergebnis = Jahresergebnis()
-        for monat in range(12):
-            monatsergebnis = Monatsergebnis(jahr, monat)
-            anzahl_tage = monatsergebnis.anzahl_tage
-            for tag in range(anzahl_tage):
-                tagesergebnis = Tagesergebnis(monat, ort, preis_pro_stunde)
-                monatsergebnis.add_tagesergebnis(tagesergebnis)
-            jahresergebnis.add_monatsergebnis(monatsergebnis)  
-        jahresergebnisse.append(jahresergebnis)
+    with ProcessPoolExecutor() as executor:
+        jahresergebnisse = list(executor.map(
+            run_single_experiment,
+            [jahr] * experiments,
+            [ort] * experiments,
+            [preis_pro_stunde] * experiments
+        ))
     return jahresergebnisse
 
+def run_single_experiment(jahr, ort, preis_pro_stunde):
+    jahresergebnis = Jahresergebnis()
+    for monat in range(12):
+        anzahl_tage = calendar.monthrange(jahr, monat + 1)[1]
+        monatsergebnis = Monatsergebnis(monat, anzahl_tage)
+        tagesergebnisse = [
+            Tagesergebnis(monat, ort, preis_pro_stunde) for _ in range(anzahl_tage)
+        ]
+        for tagesergebnis in tagesergebnisse:
+            monatsergebnis.add_tagesergebnis(tagesergebnis)
+        jahresergebnis.add_monatsergebnis(monatsergebnis)
+    return jahresergebnis
             
 class Jahresergebnis:
-    def __init__(self):
+    def __init__(self, jahr):
         self._monatsergebnisse: list[Monatsergebnis] = []
+        self.anzahl_tage = 366 if calendar.isleap(jahr) else 365 
 
-    @property
-    def anzahl_tage(self):
-        return sum(monatsergebnis.anzahl_tage for monatsergebnis in self._monatsergebnisse)
-
-    @property
+    @cached_property
     def treffer(self):
-        return sum(monatsergebnis.treffer for monatsergebnis in self._monatsergebnisse)
+        return np.sum([monatsergebnis.treffer for monatsergebnis in self._monatsergebnisse])
 
-    @property
+    @cached_property
     def treffer_quote(self):
         return round(100 * self.treffer / self.anzahl_tage if self._monatsergebnisse else 0, 2)
     
+    @cached_property
     def max_monatsergebnis(self):
-        return max(self._monatsergebnisse, key=lambda x: x.max_tagesergebnis().gewinn) if self._monatsergebnisse else None
+        return np.max(self._monatsergebnisse, key=lambda x: x.max_tagesergebnis().gewinn) if self._monatsergebnisse else None
+        # return max(self._monatsergebnisse, key=lambda x: x.max_tagesergebnis().gewinn) if self._monatsergebnisse else None
         
-    @property
+    @cached_property
     def gewinn(self):
-        return sum(monatsergebnis.gewinn for monatsergebnis in self._monatsergebnisse)
+        return np.sum([monatsergebnis.gewinn for monatsergebnis in self._monatsergebnisse])
+        # return sum(monatsergebnis.gewinn for monatsergebnis in self._monatsergebnisse)
 
     def add_monatsergebnis(self, monatsergebnis):
         self._monatsergebnisse.append(monatsergebnis)
@@ -53,7 +61,7 @@ class Jahresergebnis:
     @property
     def monatsergebnisse(self):
         """
-        :rtype: list[Monatsergebnis]
+        :rtype: [Monatsergebnis]
         """
         return self._monatsergebnisse
     
@@ -81,9 +89,9 @@ class Jahresergebnis:
 
     
 class Monatsergebnis:
-    def __init__(self, jahr, monat):
+    def __init__(self, monat, anzahl_tage):
         self.monat = monat
-        self.anzahl_tage = calendar.monthrange(jahr, monat + 1)[1]
+        self.anzahl_tage = anzahl_tage
         self._tagesergebnisse: list[Tagesergebnis] = []
 
     @property
@@ -115,8 +123,6 @@ class Monatsergebnis:
 
 
 class Tagesergebnis:
-    LAMBDA_BASIS = 0.002
-    VARKOSTEN_PRO_STUNDE = 0.5
 
     def __init__(self, monat, ort, preis_pro_stunde):
         """
@@ -130,10 +136,13 @@ class Tagesergebnis:
         self.temperatur = np.random.normal(self.monatsvariable.temperatur, self.monatsvariable.temp_abweichung)
         self.bevoelkerungszahl = np.random.normal(self.ort.einwohner, self.monatsvariable.einwohner_abweichung)
         self.konkurenzindex = np.random.uniform(0, 1)
+        self.wetter = np.random.choice(data.WETTERLAGEN, p=[0.6, 0.3, 0.1])
+        self.wochentag = np.random.choice(data.WOCHEN_TAGE)
         self.kundenzahl = np.random.poisson(self.erwartete_kundenzahl)
-        self.mietdauer = np.random.randint(1, 6, size=self.kundenzahl)
+        a, b = self.mietdauerbereich
+        self.mietdauer = np.random.randint(a, b+1, size=self.kundenzahl)
         self.umsatz = np.sum(preis_pro_stunde * self.mietdauer)
-        self.varkosten = np.sum(self.VARKOSTEN_PRO_STUNDE * self.mietdauer)
+        self.varkosten = np.sum(data.VARKOSTEN_PRO_STUNDE * self.mietdauer)
         self.gewinn = round(self.umsatz - self.varkosten - self.ort.fixkosten_pro_tag, 2)
     
     def ist_treffer(self):
@@ -141,7 +150,23 @@ class Tagesergebnis:
 
     @property
     def erwartete_kundenzahl(self):
-        return self.bevoelkerungszahl * self.saisonfaktor * self.LAMBDA_BASIS * self.temperaturfaktor * self.konkurrenzfaktor
+        return self.bevoelkerungszahl * self.saisonfaktor * data.LAMBDA_BASIS * self.temperaturfaktor * self.konkurrenzfaktor * self.wetterfaktor * self.wochentagfaktor
+
+    @property
+    def wochentagfaktor(self):
+        if self.wochentag in ["Sa", "So"]:
+            return 1.5
+        else:
+            return 1.0
+
+    @property
+    def wetterfaktor(self):
+        if self.wetter == "sonnig":
+            return 1.2
+        elif self.wetter == "bewölkt":
+            return 1.0
+        else:
+            return 0.5
 
     @property
     def konkurrenzfaktor(self):
@@ -164,12 +189,28 @@ class Tagesergebnis:
     def saisonfaktor(self):
         return 1 + (self.uebernachtungen / (self.aufenthaltsdauer * self.bevoelkerungszahl))
     
+    @property
     def mietdauerbereich(self):
-        if self.temperatur < 10:
-            return 0.5, 1.5
-        elif 10 <= self.temperatur < 15:
-            return 1.5, 2.5
-
+        """
+        :rtype: tuple[int, int]
+        """
+        (a, b) = (1, 2)
+        if self.wetter != "regen":
+            if self.temperatur < 20:
+                if self.wochentag in ["Sa", "So"]:
+                    (a, b) = (1, 3)
+            elif self.temperatur < 28:
+                if self.wochentag in ["Sa", "So"]:
+                    (a, b) = (2, 5)
+                else:
+                    (a, b) = (1, 4)
+            else:
+                if self.wochentag in ["Sa", "So"]:
+                    (a, b) = (2, 4)
+                else:
+                    (a, b) = (1, 3)
+        return (a, b)
+    
     @property
     def uebernachtungen(self):
         return self.monatsvariable.tourist.uebernachtungen

@@ -1,5 +1,10 @@
 from dataclasses import dataclass
 
+LAMBDA_BASIS = 0.002
+VARKOSTEN_PRO_STUNDE = 0.5
+WOCHEN_TAGE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
+WETTERLAGEN = ["sonnig", "bewölkt", "regen"]
+
 @dataclass(frozen=True)
 class Tourist:
     uebernachtungen: int
