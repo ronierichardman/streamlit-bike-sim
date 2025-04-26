@@ -21,12 +21,14 @@ class StatisticErgebnis:
 def rechnen_durchlaeufe(durchlaeufe):
     """
     :param durchlaeufe: list[list[Jahresergebnis]]
+    :param durchlaeufe: list[DurchlaufErgebnis]
     M: len(durchlaeufe) = 10 -> M < 40
     n: len(list[Jahresergebnis]) = 1000
     """
     mittelwerte = []
     for durchlauf in durchlaeufe:
-        mittelwerte.append(mittelwert(durchlauf))
+        # mittelwerte.append(mittelwert(durchlauf))
+        mittelwerte.append(durchlauf.durchschnitt_gewinne())
     
     mw = np.mean(mittelwerte)
     std = np.std(mittelwerte, ddof=1)  # ddof=1 für Stichprobenstandardabweichung
@@ -55,12 +57,15 @@ def mittelwert(jahresergebnisse):
     return sum(gewinne) / len(gewinne)  
   
 def plot_diagram_durchlaeufe(durchlauf_ergebnisse):
+    """
+    :param durchlauf_ergebnisse: list[DurchlaufErgebnis]
+    """
     x = []
     y = []
 
     for idx, durchlauf_ergebnis in enumerate(durchlauf_ergebnisse):
         x.append(idx + 1)
-        y.append(durchlauf_ergebnis.sum_gewinne())
+        y.append(durchlauf_ergebnis.durchschnitt_gewinne())
 
     options = {
     "xAxis": {"type": "category", "data": x},
@@ -96,6 +101,14 @@ def diagram_tagesgewinn(jahresergebnis):
 class DurchlaufErgebnis:
     def __init__(self, jahresergebnisse):
         self.jahresergebnisse = jahresergebnisse
+        self._max_jahresergebnis = max(jahresergebnisse, key=lambda x: x.gewinn) if jahresergebnisse else None
+        self._max_monatsgewinne = [jahresergebnis.monatsgewinne for jahresergebnis in jahresergebnisse]
+
+    def maximaler_jahresgewinn(self):
+        return max(jahresergebnis.gewinn for jahresergebnis in self.jahresergebnisse)
+    
+    def maximaler_monatsgewinn(self):
+        return max(jahresergebnis for jahresergebnis in self.jahresergebnisse)
 
     def sum_gewinne(self):
         return sum(jahresergebnis.gewinn for jahresergebnis in self.jahresergebnisse)
