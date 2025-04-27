@@ -29,6 +29,8 @@ def plot_simulation(durchlauf_ergebnisse):
     #Diagramm für die Simulationsergebnisse
     stat.plot_diagram_durchlaeufe(durchlauf_ergebnisse)
     stat.plot_diagram_max_gewinn_im_monat(durchlauf_ergebnisse)
+    stat.plot_diagram_durchschnittliche_gewinn_im_monat(durchlauf_ergebnisse)
+    stat.plot_diagram_min_gewinn_im_monat(durchlauf_ergebnisse)
 
 
 def run_simulation(durchlaeufen, preis_pro_stunde=0, ort=""):
@@ -56,6 +58,16 @@ def run_simulation_2(num_durchlaeufen, preis_pro_stunde=0, ort=""):
 
     return durchlauf_ergebnisse
 
+def display_statistics(sim_ergebnisse):
+    results=stat.rechnen_durchlaeufe(sim_ergebnisse)
+    #tabellarische Darstellung der Ergebnisse
+    st.subheader("Statistik der Simulationsergebnisse")
+    df = pd.DataFrame(columns=["Mittelwert", "Standardabweichung", "Median","Oberes Quartil", "Unteres Quartil","T Verteilung Gamma Fraktil","KI obere Grenze","KI untere Grenze"])
+    df.loc[0] = [results.jahresgewinn, results.jahresgewinn_std, results.jahresgewinn_median, results.jahresgewinn_oberes_quartil, results.jahresgewinn_unteres_quartil, results.jahresgewinn_t_verteilung_gamma_fraktil, results.jahresdewinn_ki_high, results.jahresdewinn_ki_low]
+    st.dataframe(df, use_container_width=True, hide_index=True)
+ 
+
+
 ##----------------------- Hauptprogramm: Streamlit App --------------------------------------
 # Titel
 st.set_page_config(page_title="Bike-Verleihstationen", page_icon="🚲")
@@ -72,6 +84,7 @@ if st.button("Simulation starten"):
             #sim_ergebnisse = run_simulation(durchlaeufe, preis_pro_stunde, ort)
             #display_tabular_data(sim_ergebnisse)
             sim_ergebnisse = run_simulation_2(durchlaeufe, preis_pro_stunde, ort)
+            display_statistics(sim_ergebnisse)
             plot_simulation(sim_ergebnisse)
             st.success("Simulation abgeschlossen!")
             st.balloons()

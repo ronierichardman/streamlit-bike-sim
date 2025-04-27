@@ -2,7 +2,9 @@ from scipy.stats import t
 import numpy as np
 from scipy.stats import norm
 import streamlit as st
+from simulation import Jahresergebnis, Monatsergebnis, Tagesergebnis
 from streamlit_echarts import st_echarts
+
 
 class StatisticErgebnis:
     def __init__(self, jahresgewinn,  jahresgewinn_std,
@@ -77,22 +79,37 @@ def plot_diagram_durchlaeufe(durchlauf_ergebnisse):
 def plot_diagram_max_gewinn_im_monat(durchlauf_ergebnisse):
     #Diagramm, die zeigt maximal Gewinn in jedem Monat
     x=[i for i in range(1, 13)]
-    list_monats=[]
-    for durchlauf_ergebnis in durchlauf_ergebnisse:
-        jahresergebnisse=durchlauf_ergebnis.jahresergebnisse
-        list_jahr = []
-        for jahresergebnis in jahresergebnisse:
-            for i in range(12):
-                 list_jahr.append(jahresergebnis.monatsergebnis(i).gewinn)
-        list_monats.append(list_jahr)
-    y=[max(items) for items in zip(*list_monats)]
+    y=[durchlauf_ergebnis.maximaler_monatsgewinn(i) for durchlauf_ergebnis in durchlauf_ergebnisse for i in range(12)]
     options = {
     "xAxis": {"type": "category", "data": x},
     "yAxis": {"type": "value"},
     "series": [{"data": y, "type": "line"}],
-}
+    }
     st_echarts(options=options, height="400px")
 
+
+def plot_diagram_durchschnittliche_gewinn_im_monat(durchlauf_ergebnisse):
+    #Diagramm, die zeigt durchschnittliche Gewinn in jedem Monat
+    x=[i for i in range(1, 13)]
+    y=[durchlauf_ergebnis.durchschnittliche_monatsgewinn(i) for durchlauf_ergebnis in durchlauf_ergebnisse for i in range(12)]
+    options = {
+    "xAxis": {"type": "category", "data": x},
+    "yAxis": {"type": "value"},
+    "series": [{"data": y, "type": "line"}],
+    }
+    st_echarts(options=options, height="400px")
+
+
+def plot_diagram_min_gewinn_im_monat(durchlauf_ergebnisse):
+    #Diagramm, die zeigt maximal Gewinn in jedem Monat
+    x=[i for i in range(1, 13)]
+    y=[durchlauf_ergebnis.minimaler_monatsgewinn(i) for durchlauf_ergebnis in durchlauf_ergebnisse for i in range(12)]
+    options = {
+    "xAxis": {"type": "category", "data": x},
+    "yAxis": {"type": "value"},
+    "series": [{"data": y, "type": "line"}],
+    }
+    st_echarts(options=options, height="400px")
 
 def diagram_tagesgewinn(jahresergebnis):
     #Diagramm, die zeigt Gewinn von jedem Tag
@@ -107,7 +124,7 @@ def diagram_tagesgewinn(jahresergebnis):
 
 
 class DurchlaufErgebnis:
-    def __init__(self, jahresergebnisse):
+    def __init__(self, jahresergebnisse:list[Jahresergebnis]):
         self.jahresergebnisse = jahresergebnisse
         self._max_jahresergebnis = max(jahresergebnisse, key=lambda x: x.gewinn) if jahresergebnisse else None
         self._max_monatsgewinne = [jahresergebnis.monatsergebnis for jahresergebnis in jahresergebnisse]
@@ -115,8 +132,14 @@ class DurchlaufErgebnis:
     def maximaler_jahresgewinn(self):
         return max(jahresergebnis.gewinn for jahresergebnis in self.jahresergebnisse)
     
-    def maximaler_monatsgewinn(self):
-        return max(jahresergebnis for jahresergebnis in self.jahresergebnisse)
+    def maximaler_monatsgewinn(self, monat):
+        return max(jahresergebnis.monatsergebnis(monat).gewinn for jahresergebnis in self.jahresergebnisse)
+    
+    def minimaler_monatsgewinn(self, monat):
+        return min(jahresergebnis.monatsergebnis(monat).gewinn for jahresergebnis in self.jahresergebnisse)
+    
+    def durchschnittliche_monatsgewinn(self, monat):
+        return np.mean([jahresergebnis.monatsergebnis(monat).gewinn for jahresergebnis in self.jahresergebnisse])
 
     def sum_gewinne(self):
         return sum(jahresergebnis.gewinn for jahresergebnis in self.jahresergebnisse)
