@@ -80,10 +80,12 @@ def plot_diagram_max_gewinn_im_monat(durchlauf_ergebnisse):
     list_monats=[]
     for durchlauf_ergebnis in durchlauf_ergebnisse:
         jahresergebnisse=durchlauf_ergebnis.jahresergebnisse
+        list_jahr = []
         for jahresergebnis in jahresergebnisse:
             for i in range(12):
-                 list_monats.append(jahresergebnis.monatsergebnis(i).gewinn)
-    y=list_monats
+                 list_jahr.append(jahresergebnis.monatsergebnis(i).gewinn)
+        list_monats.append(list_jahr)
+    y=[max(items) for items in zip(*list_monats)]
     options = {
     "xAxis": {"type": "category", "data": x},
     "yAxis": {"type": "value"},
