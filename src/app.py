@@ -28,6 +28,7 @@ def display_tabular_data(sim_ergebnisse):
 def plot_simulation(durchlauf_ergebnisse):
     #Diagramm für die Simulationsergebnisse
     stat.plot_diagram_durchlaeufe(durchlauf_ergebnisse)
+    stat.plot_diagram_max_gewinn_im_monat(durchlauf_ergebnisse)
 
 
 def run_simulation(durchlaeufen, preis_pro_stunde=0, ort=""):
@@ -68,9 +69,9 @@ durchlaeufe = st.number_input("Anzahl der Durchläufe:", min_value=1, max_value=
 if st.button("Simulation starten"):
     with st.spinner("Simulation läuft..."):
         try:
-            sim_ergebnisse = run_simulation_2(durchlaeufe, preis_pro_stunde, ort)
+            #sim_ergebnisse = run_simulation(durchlaeufe, preis_pro_stunde, ort)
             #display_tabular_data(sim_ergebnisse)
-
+            sim_ergebnisse = run_simulation_2(durchlaeufe, preis_pro_stunde, ort)
             plot_simulation(sim_ergebnisse)
             st.success("Simulation abgeschlossen!")
             st.balloons()

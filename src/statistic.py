@@ -74,14 +74,20 @@ def plot_diagram_durchlaeufe(durchlauf_ergebnisse):
     }
     st_echarts(options=options, height="400px")
 
-def diagram_jahresgewinn(jahresergebnis):
-    #Diagramm, die zeigt Gewinn von jedem Monat
+def plot_diagram_max_gewinn_im_monat(durchlauf_ergebnisse):
+    #Diagramm, die zeigt maximal Gewinn in jedem Monat
     x=[i for i in range(1, 13)]
-    y=[jahresergebnis[i]._monatsergebnisse for i in range(12)]
+    list_monats=[]
+    for durchlauf_ergebnis in durchlauf_ergebnisse:
+        jahresergebnisse=durchlauf_ergebnis.jahresergebnisse
+        for jahresergebnis in jahresergebnisse:
+            for i in range(12):
+                 list_monats.append(jahresergebnis.monatsergebnis(i).gewinn)
+    y=list_monats
     options = {
     "xAxis": {"type": "category", "data": x},
     "yAxis": {"type": "value"},
-    "series": [{"data": y, "type": "bar"}],
+    "series": [{"data": y, "type": "line"}],
 }
     st_echarts(options=options, height="400px")
 
@@ -102,7 +108,7 @@ class DurchlaufErgebnis:
     def __init__(self, jahresergebnisse):
         self.jahresergebnisse = jahresergebnisse
         self._max_jahresergebnis = max(jahresergebnisse, key=lambda x: x.gewinn) if jahresergebnisse else None
-        self._max_monatsgewinne = [jahresergebnis.monatsgewinne for jahresergebnis in jahresergebnisse]
+        self._max_monatsgewinne = [jahresergebnis.monatsergebnis for jahresergebnis in jahresergebnisse]
 
     def maximaler_jahresgewinn(self):
         return max(jahresergebnis.gewinn for jahresergebnis in self.jahresergebnisse)
