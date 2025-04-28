@@ -69,6 +69,15 @@ def run_simulation_2(num_durchlaeufen, preis_pro_stunde=0, ort=""):
 
     return durchlauf_ergebnisse
 
+def display_statistics(sim_ergebnisse):
+    results=stat.rechnen_durchlaeufe(sim_ergebnisse)
+    #tabellarische Darstellung der Ergebnisse
+    st.subheader("Statistik der Simulationsergebnisse")
+    df = pd.DataFrame(columns=["Mittelwert", "Standardabweichung", "Median","Oberes Quartil", "Unteres Quartil","T Verteilung Gamma Fraktil","KI obere Grenze","KI untere Grenze"])
+    df.loc[0] = [results.jahresgewinn, results.jahresgewinn_std, results.jahresgewinn_median, results.jahresgewinn_oberes_quartil, results.jahresgewinn_unteres_quartil, results.jahresgewinn_t_verteilung_gamma_fraktil, results.jahresdewinn_ki_high, results.jahresdewinn_ki_low]
+    st.dataframe(df, use_container_width=True, hide_index=True)
+ 
+
 def main():
     # start_time = time.time()
     # sim_ergebnisse = run_simulation_func(sim.run_monte_carlo)
