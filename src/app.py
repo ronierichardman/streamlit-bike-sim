@@ -45,7 +45,7 @@ def main():
                     )
                 vi.display_tabular(stat_results)
                 st.divider()
-                vi.plot_max_profit_a_run(sim_results)
+                vi.plot_max_profit_a_run(stat_results)
                 st.divider()
                 vi.plot_profit_by_month(stat_results)
                 st.divider()

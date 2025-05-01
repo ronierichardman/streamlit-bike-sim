@@ -288,6 +288,14 @@ class StatistikErgebnis:
         return np.mean([d.mw_jahresgewinn() for d in self.durchlauf_ergebnisse])
     
     @cached_property
+    def max_jahresergebnisse(self) -> list[Jahresergebnis]:
+        return [ d.max_jahresergebnis() for d in self.durchlauf_ergebnisse ]
+    
+    @cached_property
+    def max_jahresergebnis(self) -> Jahresergebnis:
+        return max(self.max_jahresergebnisse, key=lambda x: x.gewinn)
+    
+    @cached_property
     def mw_trefferquote(self) -> float:
         return np.mean([d.mw_treffequote() for d in self.durchlauf_ergebnisse])
     

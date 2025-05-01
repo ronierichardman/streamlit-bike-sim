@@ -1,6 +1,6 @@
 
 from data import Monatsvariablen, Wetterlagen, VARKOSTEN_PRO_STUNDE
-from models import DurchlaufErgebnis, StatistikErgebnis
+from models import StatistikErgebnis
 from statistic import BoxplotData
 import streamlit as st
 from streamlit_echarts import st_echarts
@@ -9,8 +9,9 @@ import numpy as np
 
 def display_tabular(stat_ergebnis: StatistikErgebnis):
     st.subheader("Jahresgewinn und Trefferquote")
-    st.markdown(f"Durchschnittlicher Jahresgewinn: {round(stat_ergebnis.mw_jahresgewinn):,} €")
-    st.markdown(f"Durchschnittlicher Trefferquote: {stat_ergebnis.mw_trefferquote:.2f} %")
+    st.markdown(f"Maximaler Jahresgewinn: **{round(stat_ergebnis.max_jahresergebnis.gewinn):,} €** -- Trefferquote: **{stat_ergebnis.max_jahresergebnis.trefferquote():.2f} %**")
+    st.markdown(f"Durchschnittlicher Jahresgewinn: **{round(stat_ergebnis.mw_jahresgewinn):,} €** -- Durchschnittliche Trefferquote: **{stat_ergebnis.mw_trefferquote:.2f} %**")
+   
     for i, durchlauf_ergebnis in enumerate(stat_ergebnis.durchlauf_ergebnisse):
         with st.expander(f"Durchlauf {i + 1}"):
             df = pd.DataFrame(columns=["Experiment", "Jahresgewinn", "Maximaler Monatsgewinn","Maximaler Tagesgewinn", "Trefferquote (%)"])
@@ -22,26 +23,39 @@ def display_tabular(stat_ergebnis: StatistikErgebnis):
             st.caption(f"Durchschnittlicher Tagesgewinn:   &emsp;{round(durchlauf_ergebnis.mw_tagesgewinn()):,} €" )
 
 
-def plot_max_profit_a_run(durchlauf_ergebnisse: list[DurchlaufErgebnis]):
+def plot_max_profit_a_run(stat_ergebnis: StatistikErgebnis):
     st.subheader("Höchster Jahresgewinn in jedem einzelnen Durchlauf")
     x = Monatsvariablen.ALL_NAMES
     series = []
-    max_durchlauf = min(len(durchlauf_ergebnisse), 10)
-    for i, durchlauf_ergebnis in enumerate(durchlauf_ergebnisse[:max_durchlauf]):
+    max_durchlauf = min(stat_ergebnis.durchlaufanzahl, 5)
+
+    max_jahresergebnis = stat_ergebnis.max_jahresergebnis
+    max_jahresergebnisse = [d.max_jahresergebnis() for d in stat_ergebnis.durchlauf_ergebnisse if d.max_jahresergebnis() != max_jahresergebnis]
+    for j in max_jahresergebnisse[:max_durchlauf]:
         series.append({
-            "name": f"Durchlauf {i + 1}",
+            "name": "Andere",
             "type": "line",
             "smooth": True,
-            "data": [round(m.gewinn) for m in durchlauf_ergebnis.max_jahresergebnis().monatsergebnisse()]
+            "data": [round(m.gewinn) for m in j.monatsergebnisse()]
         })
+    series.append({
+        "name": "Max. Jahresgewinn",
+        "type": "line",
+        "smooth": True,
+        "data": [round(m.gewinn) for m in max_jahresergebnis.monatsergebnisse()]
+    })
     option = {
         "tooltip": { "trigger": "axis" },
+        "legend": {
+            "data": ["Max. Jahresgewinn", "Andere"]
+        },
         "xAxis": {"type": "category", "boundaryGap": False, "data": x},
         "yAxis": { "type": "value" },
         "series": series
     }
     st_echarts(options=option, height="500px")
-    st.caption("Aus Darstellungsgründen sind nur die ersten 10 Durchläufe berücksichtigt.")
+    st.caption(f"Aus Darstellungsgründen sind nur die Durchlauf von maximalen Jahresgewinn und die ersten {max_durchlauf} Durchläufe berücksichtigt.")
+
 
 def plot_profit_by_month(stat_ergebnis: StatistikErgebnis):
     st.subheader("Monatliche Gewinne: Höchst-, Durchschnitts- und Tiefstwerte aus allen Durchläufen")
@@ -137,7 +151,8 @@ def boxplot_profit_by_day(stat_ergebnis: StatistikErgebnis):
         }]
     }
     st_echarts(options=option, height="500px")
-    st.caption("Wie stabil oder schwankend sind die täglichen Gewinne? Damit sieht man auf einen Blick, ob viele Verluste oder viele sichere Tage existieren. Volatiles oder stabiles Geschäft?")
+    st.caption("Wie stabil oder schwankend sind die täglichen Gewinne?") 
+    # Damit sieht man auf einen Blick, ob viele Verluste oder viele sichere Tage existieren. Volatiles oder stabiles Geschäft?
 
 def boxplot_profit_by_weather(stat_ergebnis: StatistikErgebnis):
     st.subheader("Wetter vs. Tagesgewinn")
@@ -188,12 +203,12 @@ def display_statistics(stat_ergebnis: StatistikErgebnis):
         ["Durchschnittlicher Gewinn pro Jahr", f"{round(stat_ergebnis.ci_jahresgewinn.mw):,} €", f"{stat_ergebnis.ci_jahresgewinn.ci_str}"],
         ["Durchschnittlicher Trefferquote", f"{stat_ergebnis.ci_trefferquote.mw:.2f} %", f"{stat_ergebnis.ci_trefferquote.ci_str}"],      
     ]
-    data = pd.DataFrame(data, columns=["Name", "Wert", "Konfidenzintervalle (95%)"])
+    data = pd.DataFrame(data, columns=["Kennzahl", "Ergebnis", "Konfidenzintervalle (95%)"])
     st.dataframe(data, use_container_width=True, hide_index=True)
 
     data_case = [
-        ["Besten Tag", f"{round(stat_ergebnis.max_tagesergebnis.gewinn):,} €", f"{stat_ergebnis.max_tagesergebnis.monat.monat_name}, {stat_ergebnis.max_tagesergebnis.temperatur:.2f} \N{DEGREE SIGN}C, {stat_ergebnis.max_tagesergebnis.wetter.name}, {stat_ergebnis.max_tagesergebnis.wochentag.name}"],
-        ["Schlechtesten Tag", f"{round(stat_ergebnis.min_tagesergebnis.gewinn):,} €", f"{stat_ergebnis.min_tagesergebnis.monat.monat_name}, {stat_ergebnis.min_tagesergebnis.temperatur:.2f} \N{DEGREE SIGN}C, {stat_ergebnis.min_tagesergebnis.wetter.name}, {stat_ergebnis.min_tagesergebnis.wochentag.name}"]   
+        ["Besten Tagesgewinn", f"{round(stat_ergebnis.max_tagesergebnis.gewinn):,} €", f"{stat_ergebnis.max_tagesergebnis.monat.monat_name}, {stat_ergebnis.max_tagesergebnis.temperatur:.2f} \N{DEGREE SIGN}C, {stat_ergebnis.max_tagesergebnis.wetter.name}, {stat_ergebnis.max_tagesergebnis.wochentag.name}"],
+        ["Schlechtesten Tagesgewinn", f"{round(stat_ergebnis.min_tagesergebnis.gewinn):,} €", f"{stat_ergebnis.min_tagesergebnis.monat.monat_name}, {stat_ergebnis.min_tagesergebnis.temperatur:.2f} \N{DEGREE SIGN}C, {stat_ergebnis.min_tagesergebnis.wetter.name}, {stat_ergebnis.min_tagesergebnis.wochentag.name}"]   
     ]
-    data_case = pd.DataFrame(data_case, columns=["Fall", "Wert", "Zustand"])
+    data_case = pd.DataFrame(data_case, columns=["Kennzahl", "Ergebnis", "Details"])
     st.dataframe(data_case, use_container_width=True, hide_index=True)

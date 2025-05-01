@@ -16,3 +16,4 @@ venv.bak/
 
 test.py
 *.log
+.DS_Store

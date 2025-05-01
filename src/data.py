@@ -72,15 +72,15 @@ class Monatsvariablen:
     JANUAR = Monatsvariable(monat=0, temperatur=2, temp_abweichung=5, einwohner_abweichung_rate=0.05, tourist=Tourist(uebernachtungen=202020, aufenthaltsdauer=2.05), monat_name="Jan")
     FEBRUAR = Monatsvariable(monat=1, temperatur=4, temp_abweichung=5, einwohner_abweichung_rate=0.05, tourist=Tourist(uebernachtungen=212069, aufenthaltsdauer=2.07), monat_name="Feb")
     MAERZ = Monatsvariable(monat=2, temperatur=8, temp_abweichung=5, einwohner_abweichung_rate=0.05, tourist=Tourist(uebernachtungen=315471, aufenthaltsdauer=2.14), monat_name="Mrz")
-    APRIL = Monatsvariable(monat=3, temperatur=12, temp_abweichung=10, einwohner_abweichung_rate=0.05, tourist=Tourist(uebernachtungen=390638, aufenthaltsdauer=2.23), monat_name="Apr")
-    MAI = Monatsvariable(monat=4, temperatur=16, temp_abweichung=10, einwohner_abweichung_rate=0.05, tourist=Tourist(uebernachtungen=422176, aufenthaltsdauer=2.16), monat_name="Mai")
-    JUNI = Monatsvariable(monat=5, temperatur=20, temp_abweichung=10, einwohner_abweichung_rate=0.05, tourist=Tourist(uebernachtungen=402027, aufenthaltsdauer=2.12), monat_name="Jun")
-    JULI = Monatsvariable(monat=6, temperatur=24, temp_abweichung=10, einwohner_abweichung_rate=0.1, tourist=Tourist(uebernachtungen=411270, aufenthaltsdauer=2.03), monat_name="Jul")
-    AUGUST = Monatsvariable(monat=7, temperatur=22, temp_abweichung=10, einwohner_abweichung_rate=0.1, tourist=Tourist(uebernachtungen=447823, aufenthaltsdauer=2.08), monat_name="Aug")
-    SEPTEMBER = Monatsvariable(monat=8, temperatur=18, temp_abweichung=10, einwohner_abweichung_rate=0.1, tourist=Tourist(uebernachtungen=439726, aufenthaltsdauer=2.08), monat_name="Sep")
+    APRIL = Monatsvariable(monat=3, temperatur=12, temp_abweichung=7, einwohner_abweichung_rate=0.05, tourist=Tourist(uebernachtungen=390638, aufenthaltsdauer=2.23), monat_name="Apr")
+    MAI = Monatsvariable(monat=4, temperatur=16, temp_abweichung=7, einwohner_abweichung_rate=0.05, tourist=Tourist(uebernachtungen=422176, aufenthaltsdauer=2.16), monat_name="Mai")
+    JUNI = Monatsvariable(monat=5, temperatur=20, temp_abweichung=7, einwohner_abweichung_rate=0.05, tourist=Tourist(uebernachtungen=402027, aufenthaltsdauer=2.12), monat_name="Jun")
+    JULI = Monatsvariable(monat=6, temperatur=24, temp_abweichung=7, einwohner_abweichung_rate=0.075, tourist=Tourist(uebernachtungen=411270, aufenthaltsdauer=2.03), monat_name="Jul")
+    AUGUST = Monatsvariable(monat=7, temperatur=22, temp_abweichung=7, einwohner_abweichung_rate=0.075, tourist=Tourist(uebernachtungen=447823, aufenthaltsdauer=2.08), monat_name="Aug")
+    SEPTEMBER = Monatsvariable(monat=8, temperatur=18, temp_abweichung=7, einwohner_abweichung_rate=0.075, tourist=Tourist(uebernachtungen=439726, aufenthaltsdauer=2.08), monat_name="Sep")
     OKTOBER = Monatsvariable(monat=9, temperatur=14, temp_abweichung=5, einwohner_abweichung_rate=0.05, tourist=Tourist(uebernachtungen=430568, aufenthaltsdauer=2.25), monat_name="Okt")
     NOVEMBER = Monatsvariable(monat=10, temperatur=8, temp_abweichung=5, einwohner_abweichung_rate=0.05, tourist=Tourist(uebernachtungen=304066, aufenthaltsdauer=1.97), monat_name="Nov")
-    DEZEMBER = Monatsvariable(monat=11, temperatur=4, temp_abweichung=5, einwohner_abweichung_rate=0.1, tourist=Tourist(uebernachtungen=459610, aufenthaltsdauer=2.14), monat_name="Dez")
+    DEZEMBER = Monatsvariable(monat=11, temperatur=4, temp_abweichung=5, einwohner_abweichung_rate=0.075, tourist=Tourist(uebernachtungen=459610, aufenthaltsdauer=2.14), monat_name="Dez")
     ALL = [
         JANUAR, FEBRUAR, MAERZ, APRIL, MAI, JUNI,
         JULI, AUGUST, SEPTEMBER, OKTOBER, NOVEMBER, DEZEMBER
