@@ -43,41 +43,6 @@ def run_single_experiment(ort_data, preis_pro_stunde) -> Jahresergebnis:
     return jahresergebnis
 
 
-# 1. Original without optimizing
-# def run_experiments(ort = Stationen.GANZ_DRESDEN.name, preis_pro_stunde = 5, experiments = 1000):
-#     jahresergebnisse = []
-#     for _ in range(experiments):
-#         jahresergebnis = Jahresergebnis(anzahl_tage_jahr)
-#         monat_data = [Monatsvariablen.get(m) for m in range(12)]
-#         ort_data = Stationen.get(ort)
-
-#         for monat in range(12):
-#             anzahl_tage = anzahl_tage_monate[monat]
-#             monatsergebnis = Monatsergebnis(monat=monat, anzahl_tage=anzahl_tage)
-#             for tag in range(anzahl_tage):
-#                 tagesergebnis = Tagesergebnis(monat_data=monat_data[monat], ort_data=ort_data, preis_pro_stunde=preis_pro_stunde)
-#                 monatsergebnis.add_tagesergebnis(tagesergebnis)
-#             jahresergebnis.add_monatsergebnis(monatsergebnis)  
-#         jahresergebnisse.append(jahresergebnis)
-#     return jahresergebnisse
-
-# 2. First optimizing
-# def run_experiments_orig(ort = Stationen.GANZ_DRESDEN.name, preis_pro_stunde = 5, experiments = 1000):
-#     """
-#     :rtype: list[Jahresergebnis]
-#     """
-#     logger.info(f"Starte Monte Carlo Simulation für {ort} mit {experiments} Experimenten.")
-#     ort_data = Stationen.get(ort)
-#     with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
-#         jahresergebnisse = list(executor.map(
-#             run_single_experiment,
-#             [ort_data] * experiments,
-#             [preis_pro_stunde] * experiments
-#         ))
-#     logger.info(f"Monte Carlo Simulation abgeschlossen. {len(jahresergebnisse)} Ergebnisse generiert.")
-#     return jahresergebnisse
-
-
 # Todo: Use NumPy for vectorized computations
 # def precompute_temperatur(monat_data, anzahl_tage):
 #     temperatures = np.random.normal(loc=monat_data.temperatur, scale=monat_data.temp_abweichung, size=anzahl_tage)

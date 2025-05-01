@@ -190,8 +190,6 @@ def boxplot_profit_by_weather(stat_ergebnis: StatistikErgebnis):
 
 def display_statistics(stat_ergebnis: StatistikErgebnis):
     st.subheader("Statistiken")
-    # st.write(f"• Anzahl der Durchläufe: {stat_ergebnis.durchlaufanzahl}")
-    # st.write(f"• Preis pro Stunde: {stat_ergebnis.preis} €")
     st.caption(f"• Ort: {stat_ergebnis.ort.name}, Einwohner: {stat_ergebnis.ort.einwohner:,}")
     st.caption(f"• Variante Kosten pro Stunde: {VARKOSTEN_PRO_STUNDE} €")
     st.caption(f"• Fixkosten pro Tag: {stat_ergebnis.ort.fixkosten_pro_tag} €")
