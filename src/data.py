@@ -91,10 +91,7 @@ class Monatsvariablen:
     ]
 
     @staticmethod
-    def get(monat):
-        """
-        rtype: Monatsvariable
-        """
+    def get(monat) -> Monatsvariable:
         for monatsaenderung in Monatsvariablen.ALL:
             if monatsaenderung.monat == monat:
                 return monatsaenderung
@@ -117,10 +114,7 @@ class Stationen:
     )
 
     @staticmethod
-    def get(name):
-        """
-        rtype: Ortvariable
-        """
+    def get(name) -> Station:
         if name == "Ganz Dresden":
             return Stationen.GANZ_DRESDEN
         for ort_var in Stationen.ALL:
