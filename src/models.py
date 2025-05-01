@@ -1,6 +1,7 @@
 import numpy as np
-from data import Station, Monatsvariable, \
+from data import Station, Stationen, Monatsvariable, \
     Wetterlagen, Wochentage, VARKOSTEN_PRO_STUNDE
+from statistic import BoxplotData, ConfidenceInterval
 from functools import cached_property
 
 
@@ -9,7 +10,7 @@ class Tagesergebnis:
                  ort_data: Station, 
                  preis_pro_stunde: float):
         
-        self.monat = monat_data.monat
+        self.monat = monat_data
         self.temperatur = np.random.normal(monat_data.temperatur, monat_data.temp_abweichung)
         self.bevoelkerungszahl = np.random.normal(ort_data.einwohner, monat_data.einwohner_abweichung_rate * ort_data.einwohner)
         self.konkurenzindex = np.random.uniform(0, 1)
@@ -167,8 +168,20 @@ class Jahresergebnis:
         return np.mean([m.gewinn for m in self._monatsergebnisse])
     
     def mw_tagesgewinn(self):
-        return np.mean([t.gewinn for t in self.tagesergebnisse()])
+        return np.mean(self.tagesgewinne())
     
+    def tagesgewinne(self) -> list[float]:
+        return [t.gewinn for t in self.tagesergebnisse()]
+    
+    def boxplot_data(self) -> BoxplotData:
+        return BoxplotData(self.tagesgewinne())
+    
+    def mw_tageskundenzahl(self):
+        return np.mean([t.kundenzahl for t in self.tagesergebnisse()])
+    
+    def mw_tagesmietdauer(self):
+        return np.mean([t.mietdauer for t in self.tagesergebnisse()])
+        
     def add_monatsergebnis(self, monatsergebnis):
         self._monatsergebnisse.append(monatsergebnis)
         
@@ -248,45 +261,40 @@ class DurchlaufErgebnis:
     def min_tagesergebnis(self) -> Tagesergebnis:
         return min(self.min_tagesergebnisse(), key=lambda x: x.gewinn)
     
-    # def std_jahresgewinn(self):
-    #     return np.std([jahresergebnis.gewinn for jahresergebnis in self.jahresergebnisse], ddof=1) if self.jahresergebnisse else 0
+    def tagesgewinne(self) -> list[float]:
+        return [t.gewinn for j in self.jahresergebnisse for t in j.tagesergebnisse()]
     
-    # def varianz_gewinne(self):
-    #     return np.var([jahresergebnis.gewinn for jahresergebnis in self.jahresergebnisse], ddof=1) if self.jahresergebnisse else 0
+    def mw_tageskundenzahl(self):
+        return np.mean([j.mw_tageskundenzahl() for j in self.jahresergebnisse])
     
-    # def median_gewinne(self):
-    #     return np.median([jahresergebnis.gewinn for jahresergebnis in self.jahresergebnisse]) if self.jahresergebnisse else 0
+    def mw_tagesmietdauer(self):
+        return np.mean([j.mw_tagesmietdauer() for j in self.jahresergebnisse])
 
-
+    def boxplot_data(self) -> BoxplotData:
+        return self.max_jahresergebnis().boxplot_data()
+    
 class StatistikErgebnis:
-    def __init__(self, durchlauf_ergebnisse: list[DurchlaufErgebnis]):
+    def __init__(self, ort, preis, durchlauf_ergebnisse: list[DurchlaufErgebnis]):
         self.durchlauf_ergebnisse = durchlauf_ergebnisse
+        self.ort: Station = Stationen.get(ort)
+        self.preis = preis
+
+    @cached_property
+    def durchlaufanzahl(self) -> int:
+        return len(self.durchlauf_ergebnisse)
     
     @cached_property
-    def mw_jahresgewinn(self):
+    def mw_jahresgewinn(self) -> float:
         return np.mean([d.mw_jahresgewinn() for d in self.durchlauf_ergebnisse])
     
     @cached_property
-    def mw_trefferquote(self):
+    def mw_trefferquote(self) -> float:
         return np.mean([d.mw_treffequote() for d in self.durchlauf_ergebnisse])
     
-
-    def mw_monatsgewinn(self, monat=-1):
+    def mw_monatsgewinn(self, monat=-1) -> float:
         if monat == -1:
             return np.mean([d.mw_monatsgewinn() for d in self.durchlauf_ergebnisse])
         return np.mean([ d.mw_monatsgewinn(monat) for d in self.durchlauf_ergebnisse])
-
-    # @cached_property
-    # def mw_monatsgewinne(self, monat) -> list[float]:
-    #     return [ d.mw_monatsgewinn(monat) for d in self.durchlauf_ergebnisse]
-
-    # @cached_property
-    # def max_monatsgewinne(self, monat) -> list[float]:
-    #     return [ d.max_monatsergebnis(monat).gewinn for d in self.durchlauf_ergebnisse ]
-    
-    # @cached_property
-    # def min_monatsgewinne(self, monat) -> list[float]:
-    #     return [ d.min_monatsergebnis(monat).gewinn for d in self.durchlauf_ergebnisse ]
     
     def monatsergebnisse(self, monat=-1) -> list[Monatsergebnis]:
         if monat == -1:
@@ -312,7 +320,7 @@ class StatistikErgebnis:
         return min(self.monatsergebnisse(monat), key=lambda x: x.gewinn)
     
     @cached_property
-    def mw_tagesgewinn(self):
+    def mw_tagesgewinn(self) -> float:
         return np.mean([d.mw_tagesgewinn() for d in self.durchlauf_ergebnisse])
 
     @cached_property
@@ -328,12 +336,35 @@ class StatistikErgebnis:
         return [ d.min_tagesergebnis() for d in self.durchlauf_ergebnisse ]
 
     @cached_property
-    def max_tagesergebnis(self):
+    def max_tagesergebnis(self) -> Tagesergebnis:
         return max(self.max_tagesergebnisse, key=lambda x: x.gewinn)
     
     @cached_property
-    def min_tagesergebnis(self):
+    def min_tagesergebnis(self) -> Tagesergebnis:
         return min(self.min_tagesergebnisse, key=lambda x: x.gewinn)
     
-
+    @cached_property
+    def ci_jahresgewinn(self) -> ConfidenceInterval:
+        return ConfidenceInterval([d.mw_jahresgewinn() for d in self.durchlauf_ergebnisse])
+    
+    def ci_monatsgewinn(self, monat=-1) -> ConfidenceInterval:
+        if monat == -1:
+            return ConfidenceInterval([d.mw_monatsgewinn() for d in self.durchlauf_ergebnisse])
+        return ConfidenceInterval([d.mw_monatsgewinn(monat) for d in self.durchlauf_ergebnisse])
+    
+    @cached_property
+    def ci_tagesgewinn(self) -> ConfidenceInterval:
+        return ConfidenceInterval([d.mw_tagesgewinn() for d in self.durchlauf_ergebnisse])
+    
+    @cached_property
+    def ci_trefferquote(self) -> ConfidenceInterval:
+        return ConfidenceInterval([d.mw_treffequote() for d in self.durchlauf_ergebnisse])
+    
+    @cached_property
+    def ci_tageskundenzahl(self) -> ConfidenceInterval:
+        return ConfidenceInterval([d.mw_tageskundenzahl() for d in self.durchlauf_ergebnisse])
+    
+    @cached_property
+    def ci_tagesmietdauer(self) -> ConfidenceInterval:
+        return ConfidenceInterval([d.mw_tagesmietdauer() for d in self.durchlauf_ergebnisse])
     

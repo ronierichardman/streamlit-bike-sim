@@ -1,7 +1,7 @@
 import simulation as sim
 from models import DurchlaufErgebnis, StatistikErgebnis
 from data import Stationen
-import visualizer as vi
+import visualize as vi
 import streamlit as st
 import time
 import applogger
@@ -38,11 +38,24 @@ def main():
                 st.success(f"Simulation abgeschlossen in {elapsed_time:.2f} Sekunden!")
                 st.balloons()
 
-                stat_results = StatistikErgebnis(sim_results)
+                stat_results = StatistikErgebnis(
+                    ort=ort, 
+                    preis=preis_pro_stunde, 
+                    durchlauf_ergebnisse=sim_results
+                    )
                 vi.display_tabular(stat_results)
+                st.divider()
                 vi.plot_max_profit_a_run(sim_results)
+                st.divider()
                 vi.plot_profit_by_month(stat_results)
+                st.divider()
                 vi.plot_profit_by_day(stat_results)
+                st.divider()
+                vi.boxplot_profit_by_day(stat_results)
+                st.divider()
+                vi.boxplot_profit_by_weather(stat_results)
+                st.divider()
+                vi.display_statistics(stat_results)
 
             except Exception as e:
                 logger.error(f"Fehler bei der Simulation: {e}")

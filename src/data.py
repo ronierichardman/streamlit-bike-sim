@@ -45,10 +45,11 @@ class Station:
         self.lambda_basis = max(self.miete_pro_tag / self.einwohner, LAMBDA_BASIS)
 
 class Wetterlagen:
-    SONNIG = Wetterlage(name="sonnig")
-    BEWOELKT = Wetterlage(name="bewölkt")
-    REGEN = Wetterlage(name="regen")
+    SONNIG = Wetterlage(name="Sonnig")
+    BEWOELKT = Wetterlage(name="Bewölkt")
+    REGEN = Wetterlage(name="Regen")
     ALL = [SONNIG, BEWOELKT, REGEN]
+    ALL_NAMES = [SONNIG.name, BEWOELKT.name, REGEN.name]
 
     def __eq__(self, other):
         return self.name == other.name
@@ -126,3 +127,4 @@ class Stationen:
             if ort_var.name == name:
                 return ort_var
         raise ValueError(f"Ort {name} nicht gefunden.")
+    
