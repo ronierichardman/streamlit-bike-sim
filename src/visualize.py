@@ -190,7 +190,7 @@ def boxplot_profit_by_weather(stat_ergebnis: StatistikErgebnis):
 
 def display_statistics(stat_ergebnis: StatistikErgebnis):
     st.subheader("Statistiken")
-    st.caption(f"• Ort: {stat_ergebnis.ort.name}, Einwohner: {stat_ergebnis.ort.einwohner:,}")
+    st.caption(f"• Ort: {stat_ergebnis.ort.name} | Einwohner: {stat_ergebnis.ort.einwohner:,} | Lambda basis: {stat_ergebnis.ort.lambda_basis:.4f}")
     st.caption(f"• Variante Kosten pro Stunde: {VARKOSTEN_PRO_STUNDE} €")
     st.caption(f"• Fixkosten pro Tag: {stat_ergebnis.ort.fixkosten_pro_tag} €")
 

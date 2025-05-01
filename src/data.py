@@ -63,7 +63,7 @@ class Wochentage:
     SA = Wochentag(name="Sa")
     SO = Wochentag(name="So")
     ALL = [MO, DI, MI, DO, FR, SA, SO]
-    WOCHENENDE = [SA, SA]
+    WOCHENENDE = [SA, SO]
 
     def __eq__(self, other):
         return self.name == other.name
